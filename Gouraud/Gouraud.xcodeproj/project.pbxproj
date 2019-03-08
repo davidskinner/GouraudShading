@@ -36,8 +36,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B18B72B122308B86008C99F8 /* OpenGL.framework in Frameworks */,
 				B18B72B322308BB0008C99F8 /* GLUT.framework in Frameworks */,
+				B18B72B122308B86008C99F8 /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
