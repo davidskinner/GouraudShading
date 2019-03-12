@@ -30,15 +30,6 @@ float Nx[SIZE + 1][SIZE + 1];
 float Ny[SIZE + 1][SIZE + 1];
 float Nz[SIZE + 1][SIZE + 1];
 
-// House locations
-#define MIN_DIST 0.02
-#define MAX_DIST 10
-#define MODE GL_POLYGON
-#define COUNT 15
-float Hx[COUNT];
-float Hy[COUNT];
-float Hz[COUNT];
-
 //---------------------------------------
 // Calculate random value between [-R..R]
 //---------------------------------------
@@ -154,45 +145,6 @@ void init_normals()
 }
 
 //---------------------------------------
-// Initialize house locations
-//---------------------------------------
-void init_house()
-{
-    // Position houses at random locations on surface
-    int count = 0;
-    while (count < COUNT)
-    {
-        // Generate random house location
-        int i = rand() % SIZE;
-        int j = rand() % SIZE;
-        float hx = Px[i][j];
-        float hy = Py[i][j];
-        float hz = Pz[i][j];
-        
-        // Compare to all other house locations
-        float min_dist = MAX_DIST;
-        for (i = 0; i<count; i++)
-        {
-            float dist = (hx-Hx[i])*(hx-Hx[i])
-            + (hy-Hy[i])*(hy-Hy[i])
-            + (hz-Hz[i])*(hz-Hz[i]);
-            if (min_dist > dist)
-                min_dist = dist;
-        }
-        
-        // Save house location
-        if (min_dist > MIN_DIST)
-        {
-            // printf("%d %4.2f %4.2f %4.2f\n", count, hx, hy, hz);
-            Hx[count] = hx;
-            Hy[count] = hy;
-            Hz[count] = hz;
-            count++;
-        }
-    }
-}
-
-//---------------------------------------
 // Init function for OpenGL
 //---------------------------------------
 void init()
@@ -206,78 +158,6 @@ void init()
 }
 
 
-//---------------------------------------
-// Draw the house at specified location
-//---------------------------------------
-void draw_house(float x, float y, float z)
-{
-    float x_size = 0.12;
-    float x_min = x - x_size/2;
-    float x_max = x + x_size/2;
-    float y_size = 0.12;
-    float y_min = y - y_size/2;
-    float y_max = y + y_size/2;
-    float z_size = 0.15;
-    float z_min = z;
-    float z_mid = z + z_size * 0.75;
-    float z_max = z + z_size;
-    
-    // Draw roof and door
-    glColor3f(1.0, 0.0, 1.0);
-    glBegin(MODE);
-    glVertex3f(x, y_min, z_max);
-    glVertex3f(x, y_max, z_max);
-    glVertex3f(x_min, y_max, z_mid);
-    glVertex3f(x_min, y_min, z_mid);
-    glEnd();
-    glBegin(MODE);
-    glVertex3f(x, y_min, z_max);
-    glVertex3f(x, y_max, z_max);
-    glVertex3f(x_max, y_max, z_mid);
-    glVertex3f(x_max, y_min, z_mid);
-    glEnd();
-    glBegin(MODE);
-    glVertex3f(x-x_size/6, y_min-0.001, z_min);
-    glVertex3f(x-x_size/6, y_min-0.001, z_min+z_size/2);
-    glVertex3f(x+x_size/6, y_min-0.001, z_min+z_size/2);
-    glVertex3f(x+x_size/6, y_min-0.001, z_min);
-    glEnd();
-    
-    // Draw four walls and floor
-    glColor3f(0.0, 0.0, 1.0);
-    glBegin(MODE);
-    glVertex3f(x_min, y_min, z_min);
-    glVertex3f(x_min, y_min, z_mid);
-    glVertex3f(x, y_min, z_max);
-    glVertex3f(x_max, y_min, z_mid);
-    glVertex3f(x_max, y_min, z_min);
-    glEnd();
-    glBegin(MODE);
-    glVertex3f(x_min, y_max, z_min);
-    glVertex3f(x_min, y_max, z_mid);
-    glVertex3f(x, y_max, z_max);
-    glVertex3f(x_max, y_max, z_mid);
-    glVertex3f(x_max, y_max, z_min);
-    glEnd();
-    glBegin(MODE);
-    glVertex3f(x_min, y_min, z_min);
-    glVertex3f(x_min, y_min, z_mid);
-    glVertex3f(x_min, y_max, z_mid);
-    glVertex3f(x_min, y_max, z_min);
-    glEnd();
-    glBegin(MODE);
-    glVertex3f(x_max, y_min, z_min);
-    glVertex3f(x_max, y_min, z_mid);
-    glVertex3f(x_max, y_max, z_mid);
-    glVertex3f(x_max, y_max, z_min);
-    glEnd();
-    glBegin(MODE);
-    glVertex3f(x_min, y_min, z_min);
-    glVertex3f(x_min, y_max, z_min);
-    glVertex3f(x_max, y_max, z_min);
-    glVertex3f(x_max, y_min, z_min);
-    glEnd();
-}
 
 //---------------------------------------
 // Display callback for OpenGL
@@ -330,12 +210,6 @@ void display()
         }
 #endif
     
-#define HOUSE
-#ifdef HOUSE
-    // Draw the houses
-    for (i = 0; i < COUNT; i++)
-        draw_house(Hx[i], Hy[i], Hz[i]);
-#endif
     glFlush();
 }
 
@@ -377,7 +251,6 @@ int main(int argc, char *argv[])
     init();
     init_surface();
     init_normals();
-    init_house();
     printf("Keyboard commands:\n");
     printf("   'x' - rotate x-axis -5 degrees\n");
     printf("   'X' - rotate x-axis +5 degrees\n");
