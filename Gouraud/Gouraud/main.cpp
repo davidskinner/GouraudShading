@@ -11,10 +11,10 @@
 #include <GLUT/glut.h>
 
 // Material properties
-float Ka = 0.2;
-float Kd = 0.4;
-float Ks = 0.4;
-float Kp = 0.5;
+float Ka = 0.3; //0.2
+float Kd = 0.6;
+float Ks = .9;
+float Kp = 0.1;
 
 // Transformation variables
 #define ROTATE 1
@@ -131,7 +131,7 @@ void init()
     
     // Initialize smooth shading
     glShadeModel(GL_SMOOTH);
-    init_light(GL_LIGHT0, 1, 1, 1, 1, 1, 1);
+    init_light(GL_LIGHT0, 0, 1, 0, 1, 1, 1);
     
     // Initialize surface
     init_surface(-1.0, 1.0, -1.0, 1.0, -1, 0, -1, 0, 0, 0);
