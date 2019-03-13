@@ -1,128 +1,113 @@
 
 //---------------------------------------
-// Program: surface2.cpp
-// Purpose: Generate and place random building
-//          building models on fractal surface.
+// Program: surface4.cpp
+// Purpose: Use Phong shading to display
+//          random wave surface model.
 // Author:  John Gauch
-// Date:    September 2008
+// Date:    Spring 2012
 //---------------------------------------
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <GLUT/glut.h>
-//#ifdef MAC
-//#include <GLUT/glut.h>
-//#else
-//#include <GL/glut.h>
-//#endif
 
-// Global variables
+class V3
+{
+public:
+    float x;
+    float y;
+    float z;
+    
+    V3(float x, float y, float z)
+    {
+        this->x = x;
+        this->y = y;
+        this->z =z;
+    }
+};
+
+class RGB
+{
+public:
+    float red;
+    float green;
+    float blue;
+    
+    RGB(float r, float g, float b)
+    {
+        this->red = r;
+        this->green = g;
+        this->blue = b;
+    }
+};
+
+V3 L1 = V3(3,5,1);
+V3 L2 = V3(0,0,0);
+
+// Transformation variables
+#define ROTATE 1
+#define TRANSLATE 2
 int xangle = 0;
 int yangle = 0;
 int zangle = 0;
+int xpos = 0;
+int ypos = 0;
+int zpos = 0;
+int mode = ROTATE;
 
-// Surface and normals
-#define SIZE 32
+// Surface variables
+#define SIZE 512
 float Px[SIZE + 1][SIZE + 1];
 float Py[SIZE + 1][SIZE + 1];
 float Pz[SIZE + 1][SIZE + 1];
 float Nx[SIZE + 1][SIZE + 1];
 float Ny[SIZE + 1][SIZE + 1];
 float Nz[SIZE + 1][SIZE + 1];
+#define STEP 0.1
+
+
+
+// 1/(a+bD+cD2)
+
 
 //---------------------------------------
-// Calculate random value between [-R..R]
+// Initialize surface points
 //---------------------------------------
-float myrand(float R)
+void init_surface(float Xmin, float Xmax, float Ymin, float Ymax) // big boi
 {
-    return (2 * R * rand()) / RAND_MAX - R;
-}
-
-//---------------------------------------
-// Recursive function to split surface
-//---------------------------------------
-void split(int xlow, int xhigh, int ylow, int yhigh, float radius)
-{
-    // Check terminating condition
-    if ((xhigh > xlow+1) || (yhigh > ylow+1))
+    // Initialize (x,y,z) coordinates of surface
+    for (int i = 0; i <= SIZE; i++)
+        for (int j = 0; j <= SIZE; j++)
+        {
+            Px[i][j] = Xmin + i * (Xmax - Xmin) / SIZE;
+            Py[i][j] = Ymin + j * (Ymax - Ymin) / SIZE;
+            Pz[i][j] = 0;
+        }
+    
+    // Add randoms waves to surface //play with this for surface texture
+    for (int wave = 1; wave <= 10; wave++)
     {
-        // Calculate length of diagonal
-        int xmid = (xhigh + xlow) / 2;
-        int ymid = (yhigh + ylow) / 2;
-        float dx = Px[xhigh][yhigh] - Px[xlow][ylow];
-        float dy = Py[xhigh][yhigh] - Py[xlow][ylow];
-        float dz = Pz[xhigh][yhigh] - Pz[xlow][ylow];
-        float length = sqrt(dx * dx + dy * dy + dz * dz) / radius;
-        
-        // Generate five midpoints with random displacements
-        Px[xlow][ymid] = (Px[xlow][ylow] + Px[xlow][yhigh]) / 2 + myrand(length);
-        Py[xlow][ymid] = (Py[xlow][ylow] + Py[xlow][yhigh]) / 2 + myrand(length);
-        Pz[xlow][ymid] = (Pz[xlow][ylow] + Pz[xlow][yhigh]) / 2 + myrand(length);
-        
-        Px[xhigh][ymid] = (Px[xhigh][ylow] + Px[xhigh][yhigh]) / 2 + myrand(length);
-        Py[xhigh][ymid] = (Py[xhigh][ylow] + Py[xhigh][yhigh]) / 2 + myrand(length);
-        Pz[xhigh][ymid] = (Pz[xhigh][ylow] + Pz[xhigh][yhigh]) / 2 + myrand(length);
-        
-        Px[xmid][ylow] = (Px[xlow][ylow] + Px[xhigh][ylow]) / 2 + myrand(length);
-        Py[xmid][ylow] = (Py[xlow][ylow] + Py[xhigh][ylow]) / 2 + myrand(length);
-        Pz[xmid][ylow] = (Pz[xlow][ylow] + Pz[xhigh][ylow]) / 2 + myrand(length);
-        
-        Px[xmid][yhigh] = (Px[xlow][yhigh] + Px[xhigh][yhigh]) / 2 + myrand(length);
-        Py[xmid][yhigh] = (Py[xlow][yhigh] + Py[xhigh][yhigh]) / 2 + myrand(length);
-        Pz[xmid][yhigh] = (Pz[xlow][yhigh] + Pz[xhigh][yhigh]) / 2 + myrand(length);
-        
-        Px[xmid][ymid] = (Px[xlow][ylow] + Px[xhigh][yhigh]) / 2 + myrand(length);
-        Py[xmid][ymid] = (Py[xlow][ylow] + Py[xhigh][yhigh]) / 2 + myrand(length);
-        Pz[xmid][ymid] = (Pz[xlow][ylow] + Pz[xhigh][yhigh]) / 2 + myrand(length);
-        
-        // Perform recursive calls
-        split(xlow, xmid, ylow, ymid, radius);
-        split(xmid, xhigh, ylow, ymid, radius);
-        split(xlow, xmid, ymid, yhigh, radius);
-        split(xmid, xhigh, ymid, yhigh, radius);
+        int rand_i = rand() % SIZE / wave;
+        int rand_j = rand() % SIZE / wave;
+        float length = sqrt(rand_i * rand_i + rand_j * rand_j);
+        if (length >= 10)
+            for (int i = 0; i <= SIZE; i++)
+                for (int j = 0; j <= SIZE; j++)
+                {
+                    float angle = (rand_i * i + rand_j * j) / (length * length);
+                    Pz[i][j] += 0.01 * sin(angle * 2 * M_PI);
+                }
     }
 }
 
 //---------------------------------------
-// Initialize random surface
+// Initialize surface normals
 //---------------------------------------
-void init_surface()
-{
-    // Initialize surface points
-    Px[0][0] = -1.0;
-    Py[0][0] = -1.0;
-    Pz[0][0] = 0.0;
-    Px[0][SIZE] = -1.0;
-    Py[0][SIZE] = 1.0;
-    Pz[0][SIZE] = 0.0;
-    Px[SIZE][0] = 1.0;
-    Py[SIZE][0] = -1.0;
-    Pz[SIZE][0] = 0.0;
-    Px[SIZE][SIZE] = 1.0;
-    Py[SIZE][SIZE] = 1.0;
-    Pz[SIZE][SIZE] = 0.0;
-    split(0, SIZE, 0, SIZE, 20);
-    
-    // Smooth surface points
-    int i, j;
-    for (i=1; i<SIZE; i++)
-        for (j=1; j<SIZE; j++)
-        {
-            Px[i][j] = (Px[i][j] + Px[i-1][j] + Px[i+1][j] + Px[i][j-1] + Px[i][j+1] ) / 5;
-            Py[i][j] = (Py[i][j] + Py[i-1][j] + Py[i+1][j] + Py[i][j-1] + Py[i][j+1] ) / 5;
-            Pz[i][j] = (Pz[i][j] + Pz[i-1][j] + Pz[i+1][j] + Pz[i][j-1] + Pz[i][j+1] ) / 5;
-        }
-}
-
-//---------------------------------------
-// Calculate surface normals
-//---------------------------------------
-void init_normals()
+void init_normals() // big boi
 {
     // Initialize surface normals
-    int i, j;
-    for (i=0; i<=SIZE; i++)
-        for (j=0; j<=SIZE; j++)
+    for (int i=0; i<=SIZE; i++)
+        for (int j=0; j<=SIZE; j++)
         {
             // Get tangents S and T
             float Sx = (i<SIZE) ? Px[i+1][j] - Px[i][j] : Px[i][j] - Px[i-1][j];
@@ -153,11 +138,13 @@ void init()
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    float radius = 1.2;
+    glOrtho(-radius, radius, -radius, radius, -radius, radius);
     glEnable(GL_DEPTH_TEST);
+    // Initialize surface
+    init_surface(-1.0, 1.0, -1.0, 1.0);
+    init_normals();
 }
-
-
 
 //---------------------------------------
 // Display callback for OpenGL
@@ -171,45 +158,25 @@ void display()
     glRotatef(xangle, 1.0, 0.0, 0.0);
     glRotatef(yangle, 0.0, 1.0, 0.0);
     glRotatef(zangle, 0.0, 0.0, 1.0);
-    int i, j;
     
-#define SURFACE
-#ifdef SURFACE
+    
     // Draw the surface
-    glColor3f(1.0, 0.0, 0.0);
-    for (i = 0; i <= SIZE; i++)
-    {
-        glBegin(GL_LINE_STRIP);
-        for (j = 0; j <= SIZE; j++)
-            glVertex3f(Px[i][j], Py[i][j], Pz[i][j]);
-        glEnd();
-    }
-    glColor3f(0.0, 1.0, 0.0);
-    for (j = 0; j <= SIZE; j++)
-    {
-        glBegin(GL_LINE_STRIP);
-        for (i = 0; i <= SIZE; i++)
-            glVertex3f(Px[i][j], Py[i][j], Pz[i][j]);
-        glEnd();
-    }
-#endif
-    
-#define NO_NORMALS
-#ifdef NORMALS
-    // Draw the normals
-    glColor3f(0.0, 0.0, 1.0);
-    for (i = 0; i <= SIZE; i++)
-        for (j = 0; j <= SIZE; j++)
+    int i, j;
+    for (i = 0; i < SIZE; i++)
+        for (j = 0; j < SIZE; j++)
         {
-            glBegin(GL_LINE_STRIP);
+            // glBegin(GL_LINE_LOOP);
+            glBegin(GL_POLYGON);
+            glNormal3f(Nx[i][j], Ny[i][j], Nz[i][j]); // glColor(red(),green(),blue())
             glVertex3f(Px[i][j], Py[i][j], Pz[i][j]);
-            glVertex3f(Px[i][j]+0.05*Nx[i][j],
-                       Py[i][j]+0.05*Ny[i][j],
-                       Pz[i][j]+0.05*Nz[i][j]);
+            glNormal3f(Nx[i + 1][j], Ny[i + 1][j], Nz[i + 1][j]);
+            glVertex3f(Px[i + 1][j], Py[i + 1][j], Pz[i + 1][j]);
+            glNormal3f(Nx[i + 1][j + 1], Ny[i + 1][j + 1], Nz[i + 1][j + 1]);
+            glVertex3f(Px[i + 1][j + 1], Py[i + 1][j + 1], Pz[i + 1][j + 1]);
+            glNormal3f(Nx[i][j + 1], Ny[i][j + 1], Nz[i][j + 1]);
+            glVertex3f(Px[i][j + 1], Py[i][j + 1], Pz[i][j + 1]);
             glEnd();
         }
-#endif
-    
     glFlush();
 }
 
@@ -218,21 +185,59 @@ void display()
 //---------------------------------------
 void keyboard(unsigned char key, int x, int y)
 {
-    // Update angles
-    if (key == 'x')
-        xangle -= 5;
-    else if (key == 'y')
-        yangle -= 5;
-    else if (key == 'z')
-        zangle -= 5;
-    else if (key == 'X')
-        xangle += 5;
-    else if (key == 'Y')
-        yangle += 5;
-    else if (key == 'Z')
-        zangle += 5;
+    // Initialize random surface
+    if (key == 'i')
+    {
+        init_surface(-1.0, 1.0, -1.0, 1.0);
+        init_normals();
+    }
     
-    // Redraw objects
+    // Determine if we are in ROTATE or TRANSLATE mode
+    if ((key == 'r') || (key == 'R'))
+    {
+        printf("Type x y z to decrease or X Y Z to increase ROTATION angles.\n");
+        mode = ROTATE;
+    }
+    else if ((key == 't') || (key == 'T'))
+    {
+        printf
+        ("Type x y z to decrease or X Y Z to increase TRANSLATION distance.\n");
+        mode = TRANSLATE;
+    }
+    
+    // Handle ROTATE
+    if (mode == ROTATE)
+    {
+        if (key == 'x')
+            xangle -= 5;
+        else if (key == 'y')
+            yangle -= 5;
+        else if (key == 'z')
+            zangle -= 5;
+        else if (key == 'X')
+            xangle += 5;
+        else if (key == 'Y')
+            yangle += 5;
+        else if (key == 'Z')
+            zangle += 5;
+    }
+    
+    // Handle TRANSLATE
+    if (mode == TRANSLATE)
+    {
+        if (key == 'x')
+            xpos -= 5;
+        else if (key == 'y')
+            ypos -= 5;
+        else if (key == 'z')
+            zpos -= 5;
+        else if (key == 'X')
+            xpos += 5;
+        else if (key == 'Y')
+            ypos += 5;
+        else if (key == 'Z')
+            zpos += 5;
+    }
     glutPostRedisplay();
 }
 
@@ -241,23 +246,18 @@ void keyboard(unsigned char key, int x, int y)
 //---------------------------------------
 int main(int argc, char *argv[])
 {
+    // Create OpenGL window
     glutInit(&argc, argv);
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(250, 250);
     glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH);
     glutCreateWindow("Surface");
+    init();
+    printf("Type r to enter ROTATE mode or t to enter TRANSLATE mode.\n");
+    
+    // Specify callback function
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
-    init();
-    init_surface();
-    init_normals();
-    printf("Keyboard commands:\n");
-    printf("   'x' - rotate x-axis -5 degrees\n");
-    printf("   'X' - rotate x-axis +5 degrees\n");
-    printf("   'y' - rotate y-axis -5 degrees\n");
-    printf("   'Y' - rotate y-axis +5 degrees\n");
-    printf("   'z' - rotate z-axis -5 degrees\n");
-    printf("   'Z' - rotate z-axis +5 degrees\n");
     glutMainLoop();
     return 0;
 }
