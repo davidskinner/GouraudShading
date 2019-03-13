@@ -16,8 +16,6 @@
 
 using namespace std;
 
-
-
 class V3
 {
 public:
@@ -46,9 +44,9 @@ float L2x,L2y,L2z,L2r,L2g,L2b;
 V3 L1 = V3(L1x,L1y,L1z);
 V3 L2 = V3(L2x,L2y,L2z);
 
-float a = .5;
-float b = .09;
-float c = .09;
+float a = .25;
+float b = .25;
+float c = .25;
 
 RGB LightOneColor = RGB(0.8,0.3,0.3);
 RGB LightTwoColor = RGB(0.2,0.3,0.5);
@@ -152,59 +150,52 @@ void init()
     float radius = 1.2;
     glOrtho(-radius, radius, -radius, radius, -radius, radius);
     glEnable(GL_DEPTH_TEST);
-    // Initialize surface
     init_surface(-1.0, 1.0, -1.0, 1.0);
     init_normals();
 }
 
-void doLighting()
+float getMagnitude(V3 light, int i, int j)
 {
     V3 v = V3(1,2,3);
-    float magnitudeOne;
-    float magnitudeTwo;
+    float magnitude;
     float dotProduct;
     float EuclideanD;
     float inverseSquare;
     
+    //v
+    v = V3(light.x - Px[i][j], light.y - Py[i][j], light.z - Pz[i][j]);
+
+    //v*n
+    dotProduct = v.x * Nx[i][j] + v.y * Ny[i][j] + v.z * Nz[i][j];
+    
+    EuclideanD = sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+    
+    // 1/(a+bD+cD2)
+    inverseSquare = 1/(a + b * EuclideanD + c * (EuclideanD * EuclideanD));
+    
+    magnitude = dotProduct * inverseSquare;
+
+    return magnitude;
+
+}
+
+void doLighting()
+{
+    float magnitudeOne;
+    float magnitudeTwo;
+    
     for (int i =0; i <= SIZE; i++) {
         for (int j = 0; j <= SIZE; j++) {
             
-            //v
-            v = V3(L1.x - Px[i][j], L1.y - Py[i][j], L1.z - Pz[i][j]);
-            
-            //v*n
-            dotProduct = v.x * Nx[i][j] + v.y * Ny[i][j] + v.z * Nz[i][j];
-            
-            EuclideanD = sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
-            
-            // 1/(a+bD+cD2)
-            inverseSquare = 1/(a + b * EuclideanD + c * EuclideanD * EuclideanD);
-            
-            magnitudeOne = dotProduct * inverseSquare;
-        
-            //now calculate for Light 2
-            //v
-            v = V3(L2.x - Px[i][j], L2.y - Py[i][j], L2.z - Pz[i][j]);
-            
-            //v*n
-            dotProduct = v.x * Nx[i][j] + v.y * Ny[i][j] + v.z * Nz[i][j];
-            
-            EuclideanD = sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
-            
-            // 1/(a+bD+cD2)
-            inverseSquare = 1/(a + b * EuclideanD + c * (EuclideanD * EuclideanD));
-
-            magnitudeTwo = dotProduct * inverseSquare;
+            magnitudeOne = getMagnitude(L1, i, j);
+            magnitudeTwo = getMagnitude(L2, i, j);
             
             red[i][j] = (magnitudeOne * LightOneColor.red) + (magnitudeTwo * LightTwoColor.red);
             green[i][j] = (magnitudeOne * LightOneColor.green) + (magnitudeTwo * LightTwoColor.green);
             blue[i][j] = (magnitudeOne * LightOneColor.blue) + (magnitudeTwo * LightTwoColor.blue);
         }
     }
-
 }
-
-//three 2d arrays
 
 void display()
 {
@@ -217,6 +208,12 @@ void display()
     glRotatef(zangle, 0.0, 0.0, 1.0);
     
     doLighting();
+    
+    glLineWidth(2.5);
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(L1x, L1y, L1z);
     
     // Draw the surface
     int i, j;
@@ -242,11 +239,6 @@ void display()
 //---------------------------------------
 void keyboard(unsigned char key, int x, int y)
 {
-    
-    //select 1 or 2 for the light mode
-    //(if(mode == 1) // if(mode == 2)
-    // move light 1 or light 2 around
-    
     // Initialize random surface
     if (key == 'i')
     {
@@ -254,13 +246,12 @@ void keyboard(unsigned char key, int x, int y)
         init_normals();
     }
     
-    
 //     Determine if we are in ROTATE or TRANSLATE or One or Two
-//    if (key == 'R')
-//    {
-//        printf("Type x y z to decrease or X Y Z to increase ROTATION angles.\n");
-//        mode = ROTATE;
-//    }
+    if (key == 'P')
+    {
+        printf("Type x y z to decrease or X Y Z to increase ROTATION angles.\n");
+        mode = ROTATE;
+    }
     else if ((key == 't') || (key == 'T'))
     {
         printf
@@ -330,6 +321,22 @@ void keyboard(unsigned char key, int x, int y)
             L2y += .5;
         else if (key == 'Z')
             L2z += .5;
+        
+        else if (key == 'r')
+        {
+            LightOneColor.red -= .05;
+            cout<<"LightTwoColor.red" + to_string(LightTwoColor.red)<< endl;
+        }
+        else if (key == 'g')
+            LightOneColor.green -= .05;
+        else if (key == 'b')
+            LightOneColor.blue  -= .05;
+        else if (key == 'R')
+            LightOneColor.red   += .05;
+        else if (key == 'G')
+            LightOneColor.green += .05;
+        else if (key == 'B')
+            LightOneColor.blue  += .05;
     }
     
     // Handle ROTATE
@@ -378,7 +385,7 @@ int main(int argc, char *argv[])
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(250, 250);
     glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH);
-    glutCreateWindow("Surface");
+    glutCreateWindow("Lights and stuff");
     init();
     printf("Type r to enter ROTATE mode or t to enter TRANSLATE mode.\n");
     
