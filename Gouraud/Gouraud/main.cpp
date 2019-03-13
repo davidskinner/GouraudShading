@@ -44,11 +44,11 @@ float L2x,L2y,L2z,L2r,L2g,L2b;
 V3 L1 = V3(L1x,L1y,L1z);
 V3 L2 = V3(L2x,L2y,L2z);
 
-float a = .25;
-float b = .25;
-float c = .25;
+float a = .5;
+float b = .05;
+float c = .2;
 
-RGB LightOneColor = RGB(0.8,0.3,0.3);
+RGB LightOneColor = RGB(0.8,0.4,0.3);
 RGB LightTwoColor = RGB(0.2,0.3,0.5);
 
 // Transformation / Light Control variables
@@ -73,7 +73,6 @@ float Pz[SIZE + 1][SIZE + 1];
 float Nx[SIZE + 1][SIZE + 1];
 float Ny[SIZE + 1][SIZE + 1];
 float Nz[SIZE + 1][SIZE + 1];
-#define STEP 0.1
 
 float red[SIZE +1][SIZE +1];
 float green[SIZE +1][SIZE +1];
@@ -156,7 +155,7 @@ void init()
 
 float getMagnitude(V3 light, int i, int j)
 {
-    V3 v = V3(1,2,3);
+    V3 v = V3(1,2,9);
     float magnitude;
     float dotProduct;
     float EuclideanD;
@@ -168,7 +167,7 @@ float getMagnitude(V3 light, int i, int j)
     //v*n
     dotProduct = v.x * Nx[i][j] + v.y * Ny[i][j] + v.z * Nz[i][j];
     
-    EuclideanD = sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+    EuclideanD = sqrt(pow((light.x - Px[i][j]),2) + pow((light.y - Py[i][j]),2) + pow((light.z - Pz[i][j]),2));
     
     // 1/(a+bD+cD2)
     inverseSquare = 1/(a + b * EuclideanD + c * (EuclideanD * EuclideanD));
@@ -176,7 +175,6 @@ float getMagnitude(V3 light, int i, int j)
     magnitude = dotProduct * inverseSquare;
 
     return magnitude;
-
 }
 
 void doLighting()
@@ -195,6 +193,8 @@ void doLighting()
             blue[i][j] = (magnitudeOne * LightOneColor.blue) + (magnitudeTwo * LightTwoColor.blue);
         }
     }
+    
+    cout <<"the magnitude of one is: " +  to_string(magnitudeOne) << endl;
 }
 
 void display()
@@ -209,11 +209,24 @@ void display()
     
     doLighting();
     
+    glPushMatrix();
     glLineWidth(2.5);
     glColor3f(1.0, 0.0, 0.0);
     glBegin(GL_LINES);
     glVertex3f(0.0, 0.0, 0.0);
     glVertex3f(L1x, L1y, L1z);
+    glEnd();
+    glPushMatrix();
+    
+    glPushMatrix();
+    glLineWidth(2.5);
+    glColor3f(0.0, 0.0, 1.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(L2x, L2y, L2z);
+    glEnd();
+    glPushMatrix();
+    
     
     // Draw the surface
     int i, j;
