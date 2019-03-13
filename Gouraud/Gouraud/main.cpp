@@ -11,6 +11,12 @@
 #include <stdlib.h>
 #include <GLUT/glut.h>
 #include <vector>
+#include <string>
+#include <iostream>
+
+using namespace std;
+
+
 
 class V3
 {
@@ -34,21 +40,25 @@ public:
     {}
 };
 
+float L1x,L1y,L1z,L1r,L1g,L1b;
+float L2x,L2y,L2z,L2r,L2g,L2b;
 
+V3 L1 = V3(L1x,L1y,L1z);
+V3 L2 = V3(L2x,L2y,L2z);
 
-V3 L1 = V3(0,0,1);
-V3 L2 = V3(0,0,0);
-
-float a = .1;
+float a = .5;
 float b = .09;
-float c = .2;
+float c = .09;
 
-RGB LightOneColor = RGB(0.1,0.2,0.3);
-RGB LightTwoColor = RGB(0.9,0.8,0.7);
+RGB LightOneColor = RGB(0.8,0.3,0.3);
+RGB LightTwoColor = RGB(0.2,0.3,0.5);
 
-// Transformation variables
-#define ROTATE 1
-#define TRANSLATE 2
+// Transformation / Light Control variables
+#define One 1
+#define Two 2
+#define ROTATE 3
+#define TRANSLATE 4
+
 int xangle = 0;
 int yangle = 0;
 int zangle = 0;
@@ -130,8 +140,6 @@ void init_normals() // big boi
         }
 }
 
-
-
 //---------------------------------------
 // Init function for OpenGL
 //---------------------------------------
@@ -149,39 +157,18 @@ void init()
     init_normals();
 }
 
-//red(i,j)
-//green(i,j)
-//blue(i,j)
-
-
-
-V3 calculateV(V3 light, float x, float y, float z)
-{
-    // x2-x1, y2-y1, z2-z1
-    V3 temp = V3(light.x - x, light.y - y, light.z - z);
-    return temp;
-}
-
-void dotProduct()
-{
-    //x1*x2 + y1*y2 + z1*z2
-    
-    
-}
-
-
-
 void doLighting()
 {
     V3 v = V3(1,2,3);
-    float magnitudeOne = 3;
-    float magnitudeTwo = 5;
+    float magnitudeOne;
+    float magnitudeTwo;
     float dotProduct;
     float EuclideanD;
     float inverseSquare;
     
     for (int i =0; i <= SIZE; i++) {
         for (int j = 0; j <= SIZE; j++) {
+            
             //v
             v = V3(L1.x - Px[i][j], L1.y - Py[i][j], L1.z - Pz[i][j]);
             
@@ -195,19 +182,17 @@ void doLighting()
             
             magnitudeOne = dotProduct * inverseSquare;
         
-            //////////////////////////////
+            //now calculate for Light 2
             //v
             v = V3(L2.x - Px[i][j], L2.y - Py[i][j], L2.z - Pz[i][j]);
             
-            
             //v*n
-            
             dotProduct = v.x * Nx[i][j] + v.y * Ny[i][j] + v.z * Nz[i][j];
             
             EuclideanD = sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
             
             // 1/(a+bD+cD2)
-            inverseSquare = 1/(a + b * EuclideanD + c * EuclideanD * EuclideanD);
+            inverseSquare = 1/(a + b * EuclideanD + c * (EuclideanD * EuclideanD));
 
             magnitudeTwo = dotProduct * inverseSquare;
             
@@ -238,9 +223,8 @@ void display()
     for (i = 0; i < SIZE; i++)
         for (j = 0; j < SIZE; j++)
         {
-            
             glBegin(GL_POLYGON);
-            glColor3f(red[i][j], green[i][j], blue[i][j]); // glColor(red(),green(),blue())
+            glColor3f(red[i][j], green[i][j], blue[i][j]);
             glVertex3f(Px[i][j], Py[i][j], Pz[i][j]);
             glColor3f(red[i + 1][j], green[i + 1][j], blue[i + 1][j]);
             glVertex3f(Px[i + 1][j], Py[i + 1][j], Pz[i + 1][j]);
@@ -270,17 +254,82 @@ void keyboard(unsigned char key, int x, int y)
         init_normals();
     }
     
-    // Determine if we are in ROTATE or TRANSLATE mode
-    if ((key == 'r') || (key == 'R'))
-    {
-        printf("Type x y z to decrease or X Y Z to increase ROTATION angles.\n");
-        mode = ROTATE;
-    }
+    
+//     Determine if we are in ROTATE or TRANSLATE or One or Two
+//    if (key == 'R')
+//    {
+//        printf("Type x y z to decrease or X Y Z to increase ROTATION angles.\n");
+//        mode = ROTATE;
+//    }
     else if ((key == 't') || (key == 'T'))
     {
         printf
         ("Type x y z to decrease or X Y Z to increase TRANSLATION distance.\n");
         mode = TRANSLATE;
+    }
+    else if (key == '1')
+    {
+        printf("Type x y z to decrease or X Y Z to increase TRANSLATION distance.\n ");
+        mode = One;
+    }
+    else if (key == '2')
+    {
+        printf("Type x y z to decrease or X Y Z to increase TRANSLATION distance.\n ");
+        mode = Two;
+    }
+    
+    if(mode == One)
+    {
+        if (key == 'x')
+        {
+            L1x -= .5;
+            cout<<"L1x: " + to_string(L1x)<< endl;
+        }
+        else if (key == 'y')
+            L1y -= .5;
+        else if (key == 'z')
+            L1z -= .5;
+        else if (key == 'X')
+            L1x += .5;
+        else if (key == 'Y')
+            L1y += .5;
+        else if (key == 'Z')
+            L1z += .5;
+        
+        else if (key == 'r')
+        {
+            LightOneColor.red -= .05;
+            cout<<"LightOneColor.red: " + to_string(LightOneColor.red)<< endl;
+        }
+        else if (key == 'g')
+            LightOneColor.green -= .05;
+        else if (key == 'b')
+            LightOneColor.blue  -= .05;
+        else if (key == 'R')
+            LightOneColor.red   += .05;
+        else if (key == 'G')
+            LightOneColor.green += .05;
+        else if (key == 'B')
+            LightOneColor.blue  += .05;
+    }
+    
+    if(mode == Two)
+    {
+        if (key == 'x')
+        {
+            L2x -= .5;
+            cout<<"L2x: " + to_string(L2x)<< endl;
+        }
+        else if (key == 'y')
+            L2y -= .5;
+        else if (key == 'z')
+            L2z -= .5;
+        else if (key == 'X')
+            L2x += .5;
+        else if (key == 'Y')
+            L2y += .5;
+        else if (key == 'Z')
+            L2z += .5;
     }
     
     // Handle ROTATE
