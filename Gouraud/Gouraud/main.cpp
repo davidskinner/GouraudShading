@@ -16,40 +16,25 @@
 
 using namespace std;
 
-class V3
-{
-public:
-    float x;
-    float y;
-    float z;
-    
-    V3(float x, float y, float z) : x(x),y(y)
-    {}
-};
+float movementSpeed = .25;
 
-class RGB
-{
-public:
-    float red;
-    float green;
-    float blue;
-    
-    RGB(float r, float g, float b) : red(r), green(g), blue(b)
-    {}
-};
+float L1x = 1;
+float L1y = 1;
+float L1z = 1;
+float L1r = 0.8;
+float L1g = 0.4;
+float L1b = 0.3;
 
-float L1x,L1y,L1z,L1r,L1g,L1b;
-float L2x,L2y,L2z,L2r,L2g,L2b;
+float L2x = -1;
+float L2y = 1;
+float L2z = 1;
+float L2r = 0.2;
+float L2g = 0.3;
+float L2b = 0.5;
 
-V3 L1 = V3(L1x,L1y,L1z);
-V3 L2 = V3(L2x,L2y,L2z);
-
-float a = .5;
+float a = .9;
 float b = .05;
 float c = .2;
-
-RGB LightOneColor = RGB(0.8,0.4,0.3);
-RGB LightTwoColor = RGB(0.2,0.3,0.5);
 
 // Transformation / Light Control variables
 #define One 1
@@ -66,7 +51,7 @@ int zpos = 0;
 int mode = ROTATE;
 
 // Surface variables
-#define SIZE 100
+#define SIZE 256
 float Px[SIZE + 1][SIZE + 1];
 float Py[SIZE + 1][SIZE + 1];
 float Pz[SIZE + 1][SIZE + 1];
@@ -153,48 +138,54 @@ void init()
     init_normals();
 }
 
-float getMagnitude(V3 light, int i, int j)
+void doLighting()
 {
-    V3 v = V3(1,2,9);
     float magnitude;
     float dotProduct;
     float EuclideanD;
     float inverseSquare;
-    
-    //v
-    v = V3(light.x - Px[i][j], light.y - Py[i][j], light.z - Pz[i][j]);
-
-    //v*n
-    dotProduct = v.x * Nx[i][j] + v.y * Ny[i][j] + v.z * Nz[i][j];
-    
-    EuclideanD = sqrt(pow((light.x - Px[i][j]),2) + pow((light.y - Py[i][j]),2) + pow((light.z - Pz[i][j]),2));
-    
-    // 1/(a+bD+cD2)
-    inverseSquare = 1/(a + b * EuclideanD + c * (EuclideanD * EuclideanD));
-    
-    magnitude = dotProduct * inverseSquare;
-
-    return magnitude;
-}
-
-void doLighting()
-{
     float magnitudeOne;
     float magnitudeTwo;
+    float Vx;
+    float Vy;
+    float Vz;
     
     for (int i =0; i <= SIZE; i++) {
         for (int j = 0; j <= SIZE; j++) {
             
-            magnitudeOne = getMagnitude(L1, i, j);
-            magnitudeTwo = getMagnitude(L2, i, j);
+            Vx = L1x - Px[i][j];
+            Vy = L1y - Py[i][j];
+            Vz = L1z - Pz[i][j];
             
-            red[i][j] = (magnitudeOne * LightOneColor.red) + (magnitudeTwo * LightTwoColor.red);
-            green[i][j] = (magnitudeOne * LightOneColor.green) + (magnitudeTwo * LightTwoColor.green);
-            blue[i][j] = (magnitudeOne * LightOneColor.blue) + (magnitudeTwo * LightTwoColor.blue);
+            //v*n
+            dotProduct = Vx * Nx[i][j] + Vy * Ny[i][j] + Vz * Nz[i][j];
+            
+            EuclideanD = sqrt(pow(Vx,2) + pow(Vy,2) + pow(Vz,2));
+            
+            // 1/(a+bD+cD2)
+            inverseSquare = 1/(a + b * EuclideanD + c * (EuclideanD * EuclideanD));
+            
+            magnitudeOne = dotProduct * inverseSquare;
+            
+            Vx = L2x - Px[i][j];
+            Vy = L2y - Py[i][j];
+            Vz = L2z - Pz[i][j];
+            
+            //v*n
+            dotProduct = Vx * Nx[i][j] + Vy * Ny[i][j] + Vz * Nz[i][j];
+            
+            EuclideanD = sqrt(pow(Vx,2) + pow(Vy,2) + pow(Vz,2));
+            
+            // 1/(a+bD+cD2)
+            inverseSquare = 1/(a + b * EuclideanD + c * (EuclideanD * EuclideanD));
+            
+            magnitudeTwo = dotProduct * inverseSquare;
+            
+            red[i][j] = (magnitudeOne * L1r) + (magnitudeTwo * L2r);
+            green[i][j] = (magnitudeOne * L1g) + (magnitudeTwo * L2g);
+            blue[i][j] = (magnitudeOne * L1b) + (magnitudeTwo * L2b);
         }
     }
-    
-    cout <<"the magnitude of one is: " +  to_string(magnitudeOne) << endl;
 }
 
 void display()
@@ -208,7 +199,7 @@ void display()
     glRotatef(zangle, 0.0, 0.0, 1.0);
     
     doLighting();
-    
+
     glPushMatrix();
     glLineWidth(2.5);
     glColor3f(1.0, 0.0, 0.0);
@@ -226,7 +217,6 @@ void display()
     glVertex3f(L2x, L2y, L2z);
     glEnd();
     glPushMatrix();
-    
     
     // Draw the surface
     int i, j;
@@ -282,74 +272,63 @@ void keyboard(unsigned char key, int x, int y)
         mode = Two;
     }
     
+    
     if(mode == One)
     {
         if (key == 'x')
-        {
-            L1x -= .5;
-            cout<<"L1x: " + to_string(L1x)<< endl;
-        }
+            L1x -= movementSpeed;
         else if (key == 'y')
-            L1y -= .5;
+            L1y -= movementSpeed;
         else if (key == 'z')
-            L1z -= .5;
+            L1z -= movementSpeed;
         else if (key == 'X')
-            L1x += .5;
+            L1x += movementSpeed;
         else if (key == 'Y')
-            L1y += .5;
+            L1y += movementSpeed;
         else if (key == 'Z')
-            L1z += .5;
+            L1z += movementSpeed;
         
         else if (key == 'r')
-        {
-            LightOneColor.red -= .05;
-            cout<<"LightOneColor.red: " + to_string(LightOneColor.red)<< endl;
-        }
+           L1r -= .05;
         else if (key == 'g')
-            LightOneColor.green -= .05;
+            L1g -= .05;
         else if (key == 'b')
-            LightOneColor.blue  -= .05;
+            L1b  -= .05;
         else if (key == 'R')
-            LightOneColor.red   += .05;
+            L1r   += .05;
         else if (key == 'G')
-            LightOneColor.green += .05;
+            L1g += .05;
         else if (key == 'B')
-            LightOneColor.blue  += .05;
+            L1b  += .05;
     }
     
     if(mode == Two)
     {
         if (key == 'x')
-        {
-            L2x -= .5;
-            cout<<"L2x: " + to_string(L2x)<< endl;
-        }
+            L2x -= movementSpeed;
         else if (key == 'y')
-            L2y -= .5;
+            L2y -= movementSpeed;
         else if (key == 'z')
-            L2z -= .5;
+            L2z -= movementSpeed;
         else if (key == 'X')
-            L2x += .5;
+            L2x += movementSpeed;
         else if (key == 'Y')
-            L2y += .5;
+            L2y += movementSpeed;
         else if (key == 'Z')
-            L2z += .5;
+            L2z += movementSpeed;
         
         else if (key == 'r')
-        {
-            LightOneColor.red -= .05;
-            cout<<"LightTwoColor.red" + to_string(LightTwoColor.red)<< endl;
-        }
+            L2r -= .05;
         else if (key == 'g')
-            LightOneColor.green -= .05;
+            L2g -= .05;
         else if (key == 'b')
-            LightOneColor.blue  -= .05;
+            L2b  -= .05;
         else if (key == 'R')
-            LightOneColor.red   += .05;
+            L2r   += .05;
         else if (key == 'G')
-            LightOneColor.green += .05;
+            L2g += .05;
         else if (key == 'B')
-            LightOneColor.blue  += .05;
+            L2b  += .05;
     }
     
     // Handle ROTATE
