@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GLUT/glut.h>
+#include <vector>
 
 class V3
 {
@@ -44,6 +45,12 @@ public:
 V3 L1 = V3(3,5,1);
 V3 L2 = V3(0,0,0);
 
+RGB LightOneColor = RGB(0.1,0.2,0.3);
+RGB LightTwoColor = RGB(0.9,0.8,0.7);
+
+
+
+
 // Transformation variables
 #define ROTATE 1
 #define TRANSLATE 2
@@ -56,7 +63,7 @@ int zpos = 0;
 int mode = ROTATE;
 
 // Surface variables
-#define SIZE 512
+#define SIZE 100
 float Px[SIZE + 1][SIZE + 1];
 float Py[SIZE + 1][SIZE + 1];
 float Pz[SIZE + 1][SIZE + 1];
@@ -129,6 +136,19 @@ void init_normals() // big boi
         }
 }
 
+//doLighting
+void doLighting()
+{
+    //calculate vectors from all points to light L1
+    for (int i=0; i<=SIZE; i++)
+    {
+        for (int j=0; j<=SIZE; j++)
+        {
+            //find vector from vertex to light source
+        }
+    }
+}
+
 //---------------------------------------
 // Init function for OpenGL
 //---------------------------------------
@@ -185,6 +205,11 @@ void display()
 //---------------------------------------
 void keyboard(unsigned char key, int x, int y)
 {
+    
+    //select 1 or 2 for the light mode
+    //(if(mode == 1) // if(mode == 2)
+    // move light 1 or light 2 around
+    
     // Initialize random surface
     if (key == 'i')
     {
